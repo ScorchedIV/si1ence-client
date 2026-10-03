@@ -1,347 +1,273 @@
-:root {
-  --bg: #0b0d12;
-  --bg-2: #121821;
-  --panel: rgba(18, 24, 33, 0.9);
-  --panel-strong: rgba(13, 17, 23, 0.96);
-  --border: rgba(150, 170, 210, 0.18);
-  --text: #edf5ff;
-  --muted: #9aa7bb;
-  --accent: #7ee0ff;
-  --accent-2: #76f3ad;
-  --warning: #ffc857;
-  --shadow: rgba(0, 0, 0, 0.35);
+// SI1ENCE Client - Combat-Optimized Eaglercraft 26.2 Launcher
+// Low-latency PvP settings, custom HUD, and performance tuning
+
+let currentPreset = 'balanced';
+let clientLoaded = false;
+let gameFrame = null;
+let fpsCounter = null;
+
+const PRESETS = {
+  balanced: {
+    renderDistance: 12,
+    particleDistance: 16,
+    shadowDistance: 40,
+    fpsTarget: 60,
+    latency: 'normal'
+  },
+  performance: {
+    renderDistance: 8,
+    particleDistance: 8,
+    shadowDistance: 20,
+    fpsTarget: 144,
+    latency: 'ultra-low'
+  },
+  pvp: {
+    renderDistance: 16,
+    particleDistance: 4,
+    shadowDistance: 12,
+    fpsTarget: 120,
+    latency: 'hyper-aggressive',
+    features: ['hitboxes', 'chunk-borders', 'crystal-tracker', 'anchor-warning']
+  },
+  chunks: {
+    renderDistance: 20,
+    particleDistance: 12,
+    shadowDistance: 32,
+    fpsTarget: 60,
+    latency: 'low'
+  }
+};
+
+const COMBAT_SETTINGS = {
+  'hyper-aggressive': {
+    inputLag: 0,
+    packetRate: 60,
+    hitboxRender: true,
+    trackerMode: 'crystal',
+    deathMessage: 'si1ence'
+  },
+  'ultra-low': {
+    inputLag: 1,
+    packetRate: 30,
+    hitboxRender: false,
+    trackerMode: 'none',
+    deathMessage: 'performance'
+  },
+  'low': {
+    inputLag: 2,
+    packetRate: 30,
+    hitboxRender: true,
+    trackerMode: 'anchor',
+    deathMessage: 'chunk'
+  },
+  'normal': {
+    inputLag: 3,
+    packetRate: 20,
+    hitboxRender: false,
+    trackerMode: 'none',
+    deathMessage: 'balanced'
+  }
+};
+
+// Initialize UI
+function init() {
+  gameFrame = document.getElementById('game-frame');
+  fpsCounter = document.getElementById('fps-box');
+
+  // Load Rise Client on startup
+  loadRiseClient();
+
+  // Preset buttons
+  document.querySelectorAll('.preset').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.preset').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentPreset = btn.dataset.preset;
+      applyPreset(currentPreset);
+      updateStatus(`Preset: ${currentPreset.toUpperCase()}`);
+    });
+  });
+
+  // Load buttons
+  document.getElementById('load-rise-btn').addEventListener('click', loadRiseClient);
+  document.getElementById('load-url-btn').addEventListener('click', loadFromURL);
+  document.getElementById('load-local-btn').addEventListener('click', loadLocalFile);
+
+  // Toggle switches
+  document.getElementById('toggle-crosshair').addEventListener('change', (e) => {
+    toggleCrosshair(e.target.checked);
+  });
+
+  document.getElementById('toggle-fps').addEventListener('change', (e) => {
+    toggleFPS(e.target.checked);
+  });
+
+  document.getElementById('toggle-particles').addEventListener('change', (e) => {
+    applyParticleReduction(e.target.checked);
+  });
+
+  document.getElementById('toggle-shadows').addEventListener('change', (e) => {
+    applyShadowReduction(e.target.checked);
+  });
+
+  // Start FPS monitoring
+  startFPSMonitor();
+
+  // Apply default preset
+  applyPreset('pvp');
+  updateStatus('SI1ENCE ready - Click "Load Rise" to play');
 }
 
-* { box-sizing: border-box; }
-
-html, body {
-  margin: 0;
-  width: 100%;
-  height: 100%;
-  background:
-    radial-gradient(circle at top, rgba(126, 224, 255, 0.14), transparent 32%),
-    linear-gradient(180deg, #070a0f 0%, #0d1119 100%);
-  color: var(--text);
-  font-family: Inter, "Segoe UI", sans-serif;
+// Load Rise Client (now called SI1ENCE)
+function loadRiseClient() {
+  const url = 'https://raw.githubusercontent.com/CloudyIceWater/Riseeeeeiey/main/dist/RiseClient.html';
+  gameFrame.src = url;
+  document.getElementById('empty-state').style.display = 'none';
+  updateStatus('SI1ENCE Eaglercraft 26.2 loading...');
+  clientLoaded = true;
+  applyPreset(currentPreset);
 }
 
-button, input {
-  font: inherit;
+// Load from URL
+function loadFromURL() {
+  const url = document.getElementById('game-url').value;
+  if (!url) {
+    updateStatus('ERROR: No URL provided');
+    return;
+  }
+  gameFrame.src = url;
+  document.getElementById('empty-state').style.display = 'none';
+  updateStatus(`Loading from URL: ${url}`);
+  clientLoaded = true;
+  applyPreset(currentPreset);
 }
 
-.app-shell {
-  display: grid;
-  grid-template-columns: 360px 1fr;
-  min-height: 100vh;
+// Load local HTML file
+function loadLocalFile() {
+  const input = document.getElementById('local-file-input');
+  input.click();
+  input.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const blob = new Blob([event.target.result], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      gameFrame.src = url;
+      document.getElementById('empty-state').style.display = 'none';
+      updateStatus(`Local client loaded: ${file.name}`);
+      clientLoaded = true;
+      applyPreset(currentPreset);
+    };
+    reader.readAsText(file);
+  });
 }
 
-.sidebar {
-  background: rgba(8, 12, 18, 0.84);
-  border-right: 1px solid var(--border);
-  padding: 22px 18px;
-  backdrop-filter: blur(18px);
-}
+// Apply preset settings
+function applyPreset(preset) {
+  const config = PRESETS[preset] || PRESETS.balanced;
+  const combat = COMBAT_SETTINGS[config.latency];
 
-.brand-wrap {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 24px;
-}
+  document.body.className = `preset-${preset}`;
 
-.brand-badge {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--accent), #7f7ffb);
-  color: #071018;
-  font-weight: 900;
-  box-shadow: 0 12px 26px rgba(126, 224, 255, 0.25);
-}
-
-.eyebrow {
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-h1 {
-  margin: 2px 0 0;
-  font-size: 1.8rem;
-}
-
-.panel-section {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 14px 14px 12px;
-  margin-bottom: 16px;
-  box-shadow: var(--shadow) 0 8px 24px;
-}
-
-.panel-section h2 {
-  margin: 0 0 12px;
-  font-size: 0.88rem;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.button-row {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-button {
-  border: 1px solid transparent;
-  cursor: pointer;
-  border-radius: 10px;
-  padding: 10px 12px;
-  color: var(--text);
-  background: rgba(255,255,255,0.04);
-  transition: filter 0.15s ease, transform 0.15s ease;
-}
-
-button:hover {
-  filter: brightness(1.08);
-  transform: translateY(-1px);
-}
-
-button.primary {
-  background: linear-gradient(135deg, var(--accent), #69a6ff);
-  color: #071018;
-  font-weight: 700;
-}
-
-button.ghost {
-  border-color: var(--border);
-}
-
-button.preset {
-  flex: 1;
-  padding: 10px 8px;
-  background: rgba(255,255,255,0.04);
-  border-color: var(--border);
-  font-size: 0.8rem;
-}
-
-button.preset.active {
-  background: linear-gradient(135deg, rgba(126,224,255,0.2), rgba(118,243,173,0.18));
-  border-color: rgba(126,224,255,0.5);
-}
-
-.input-label {
-  display: inline-block;
-  margin-bottom: 6px;
-  color: var(--muted);
-  font-size: 0.8rem;
-}
-
-input[type="text"] {
-  width: 100%;
-  border: 1px solid var(--border);
-  background: rgba(255,255,255,0.04);
-  border-radius: 10px;
-  padding: 10px 12px;
-  color: var(--text);
-}
-
-.preset-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.toggle-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 0;
-  color: var(--text);
-}
-
-.toggle-row input {
-  accent-color: var(--accent);
-}
-
-.status-box {
-  min-height: 120px;
-}
-
-#status-text {
-  color: var(--muted);
-  line-height: 1.5;
-  white-space: pre-wrap;
-}
-
-.game-stage {
-  display: flex;
-  flex-direction: column;
-  padding: 18px;
-}
-
-.stage-topbar {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.window-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 7px 12px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  color: var(--muted);
-  background: rgba(255,255,255,0.02);
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.window-pill.accent {
-  color: var(--accent);
-  border-color: rgba(126,224,255,0.32);
-}
-
-.frame-wrap {
-  position: relative;
-  flex: 1;
-  min-height: 620px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  background: #0a0d13;
-  box-shadow: 0 22px 60px rgba(0,0,0,0.45);
-}
-
-#game-frame {
-  width: 100%;
-  height: 100%;
-  border: 0;
-  background: #000;
-}
-
-.empty-state {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  text-align: center;
-  color: var(--muted);
-  background: linear-gradient(180deg, rgba(8,12,18,0.35), rgba(8,12,18,0.85));
-}
-
-.empty-state h3 {
-  font-size: 1.4rem;
-  margin-bottom: 8px;
-  color: var(--text);
-}
-
-.empty-state p {
-  margin: 0;
-  opacity: 0.9;
-}
-
-.hud-overlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 2;
-}
-
-.crosshair {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 28px;
-  height: 28px;
-  transform: translate(-50%, -50%);
-  opacity: 0.9;
-  display: none;
-}
-
-.crosshair::before,
-.crosshair::after {
-  content: "";
-  position: absolute;
-  background: rgba(255,255,255,0.92);
-  box-shadow: 0 0 10px rgba(126,224,255,0.45);
-}
-
-.crosshair::before {
-  left: 50%;
-  top: 0;
-  width: 2px;
-  height: 100%;
-  transform: translateX(-50%);
-}
-
-.crosshair::after {
-  top: 50%;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  transform: translateY(-50%);
-}
-
-.crosshair.visible {
-  display: block;
-}
-
-.fps-box {
-  position: absolute;
-  right: 18px;
-  top: 18px;
-  min-width: 90px;
-  padding: 7px 10px;
-  border-radius: 8px;
-  background: rgba(0,0,0,0.36);
-  border: 1px solid rgba(255,255,255,0.1);
-  color: var(--accent-2);
-  font-weight: 700;
-  text-align: center;
-  display: none;
-}
-
-.fps-box.visible {
-  display: inline-block;
-}
-
-body.preset-performance {
-  --accent: #7cf7c7;
-}
-
-body.preset-pvp {
-  --accent: #ffb347;
-}
-
-body.preset-chunks {
-  --accent: #8bb7ff;
-}
-
-body.preset-performance .frame-wrap,
-body.preset-pvp .frame-wrap,
-body.preset-chunks .frame-wrap {
-  box-shadow: 0 18px 44px rgba(0,0,0,0.38);
-}
-
-@media (max-width: 980px) {
-  .app-shell {
-    grid-template-columns: 1fr;
+  // Inject settings into iframe if it's loaded
+  if (clientLoaded && gameFrame.contentWindow) {
+    try {
+      gameFrame.contentWindow.postMessage({
+        type: 'si1ence-config',
+        preset: preset,
+        ...config,
+        combat: combat
+      }, '*');
+    } catch (e) {
+      // CORS / Same-origin policy may block this
+    }
   }
 
-  .sidebar {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
+  updateStatus(`${preset.toUpperCase()} preset applied\nLatency: ${config.latency}\nTarget FPS: ${config.fpsTarget}`);
+}
 
-  .frame-wrap {
-    min-height: 480px;
+// Toggle crosshair
+function toggleCrosshair(enabled) {
+  const crosshair = document.getElementById('crosshair');
+  if (enabled) {
+    crosshair.classList.add('visible');
+    updateStatus('SI1ENCE crosshair: ON');
+  } else {
+    crosshair.classList.remove('visible');
+    updateStatus('SI1ENCE crosshair: OFF');
   }
 }
+
+// Toggle FPS display
+function toggleFPS(enabled) {
+  if (enabled) {
+    fpsCounter.classList.add('visible');
+    updateStatus('FPS counter: ON');
+  } else {
+    fpsCounter.classList.remove('visible');
+    updateStatus('FPS counter: OFF');
+  }
+}
+
+// Reduce particles
+function applyParticleReduction(enabled) {
+  if (clientLoaded && gameFrame.contentWindow) {
+    try {
+      gameFrame.contentWindow.postMessage({
+        type: 'si1ence-particles',
+        reduce: enabled
+      }, '*');
+    } catch (e) {}
+  }
+  updateStatus(enabled ? 'Particles reduced' : 'Particles normal');
+}
+
+// Reduce shadows
+function applyShadowReduction(enabled) {
+  if (clientLoaded && gameFrame.contentWindow) {
+    try {
+      gameFrame.contentWindow.postMessage({
+        type: 'si1ence-shadows',
+        reduce: enabled
+      }, '*');
+    } catch (e) {}
+  }
+  updateStatus(enabled ? 'Shadows reduced' : 'Shadows normal');
+}
+
+// FPS Monitor
+let lastTime = performance.now();
+let frames = 0;
+
+function startFPSMonitor() {
+  setInterval(() => {
+    const now = performance.now();
+    const delta = now - lastTime;
+    if (delta >= 1000) {
+      const fps = Math.round(frames * 1000 / delta);
+      document.getElementById('fps-box').textContent = `FPS: ${fps}`;
+      frames = 0;
+      lastTime = now;
+    }
+    frames++;
+  }, 16);
+}
+
+// Update status display
+function updateStatus(message) {
+  document.getElementById('status-text').textContent = message;
+}
+
+// Listen for messages from iframe
+window.addEventListener('message', (e) => {
+  if (e.data && e.data.type === 'si1ence-ready') {
+    updateStatus('SI1ENCE client connected and ready for combat');
+  }
+  if (e.data && e.data.type === 'si1ence-death') {
+    updateStatus(`Died: ${e.data.reason || 'SI1ENCE moment'}`);
+  }
+});
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', init);
