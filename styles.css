@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SI1ENCE Client</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand-wrap">
+          <div class="brand-badge">S</div>
+          <div>
+            <div class="eyebrow">Eaglercraft 26.2</div>
+            <h1>SI1ENCE Client</h1>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h2>Load client</h2>
+          <div class="button-row">
+            <button id="load-url-btn" class="primary">Load URL</button>
+            <button id="load-local-btn" class="ghost">Local HTML</button>
+          </div>
+          <label class="input-label" for="game-url">Client URL</label>
+          <input id="game-url" type="text" placeholder="http://localhost:8000/index.html" />
+        </div>
+
+        <div class="panel-section">
+          <h2>Optimization preset</h2>
+          <div class="preset-grid" id="preset-grid">
+            <button class="preset active" data-preset="balanced">Balanced</button>
+            <button class="preset" data-preset="performance">Performance</button>
+            <button class="preset" data-preset="pvp">PvP</button>
+            <button class="preset" data-preset="chunks">Chunk Boost</button>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h2>Runtime tweaks</h2>
+          <div class="toggle-row">
+            <label><input type="checkbox" id="toggle-crosshair" checked /> Custom crosshair</label>
+          </div>
+          <div class="toggle-row">
+            <label><input type="checkbox" id="toggle-fps" checked /> FPS HUD</label>
+          </div>
+          <div class="toggle-row">
+            <label><input type="checkbox" id="toggle-particles" /> Lower particles</label>
+          </div>
+          <div class="toggle-row">
+            <label><input type="checkbox" id="toggle-shadows" /> Lower shadows</label>
+          </div>
+        </div>
+
+        <div class="panel-section status-box">
+          <h2>Status</h2>
+          <div id="status-text">Awaiting client load...</div>
+        </div>
+      </aside>
+
+      <main class="game-stage">
+        <div class="stage-topbar">
+          <div class="window-pill">Browser client</div>
+          <div class="window-pill accent">SI1ENCE</div>
+        </div>
+
+        <div class="frame-wrap">
+          <div id="hud-overlay" class="hud-overlay">
+            <div class="crosshair" id="crosshair"></div>
+            <div class="fps-box" id="fps-box">FPS: --</div>
+          </div>
+          <iframe id="game-frame" title="Eaglercraft client" allowfullscreen></iframe>
+          <div id="empty-state" class="empty-state">
+            <h3>No client loaded</h3>
+            <p>Paste a client URL or load a local HTML build.</p>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <input id="local-file-input" type="file" accept=".html,.htm,text/html" hidden />
+
+    <script src="app.js"></script>
+  </body>
+</html>

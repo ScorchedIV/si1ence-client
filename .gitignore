@@ -1,0 +1,159 @@
+const state = {
+  currentPreset: 'balanced',
+  fpsInterval: null,
+  lastFrameTime: performance.now(),
+  frameCount: 0
+};
+
+const gameFrame = document.getElementById('game-frame');
+const emptyState = document.getElementById('empty-state');
+const statusText = document.getElementById('status-text');
+const gameUrlInput = document.getElementById('game-url');
+const localFileInput = document.getElementById('local-file-input');
+const crosshair = document.getElementById('crosshair');
+const fpsBox = document.getElementById('fps-box');
+const toggleCrosshair = document.getElementById('toggle-crosshair');
+const toggleFPS = document.getElementById('toggle-fps');
+const toggleParticles = document.getElementById('toggle-particles');
+const toggleShadows = document.getElementById('toggle-shadows');
+
+function setStatus(message) {
+  statusText.textContent = message;
+}
+
+function applyPreset(name) {
+  state.currentPreset = name;
+  document.body.classList.remove('preset-performance', 'preset-pvp', 'preset-chunks');
+
+  if (name === 'performance') document.body.classList.add('preset-performance');
+  if (name === 'pvp') document.body.classList.add('preset-pvp');
+  if (name === 'chunks') document.body.classList.add('preset-chunks');
+
+  document.querySelectorAll('.preset').forEach((button) => {
+    button.classList.toggle('active', button.dataset.preset === name);
+  });
+
+  const presetDescriptions = {
+    balanced: 'Balanced preset enabled — stable visuals and gameplay.',
+    performance: 'Performance preset enabled — lower cost visuals and smooth frame pacing.',
+    pvp: 'PvP preset enabled — cleaner combat crosshair and quick-read HUD.',
+    chunks: 'Chunk boost preset enabled — optimized chunk loading assumptions.'
+  };
+
+  setStatus(presetDescriptions[name]);
+}
+
+function startFpsLoop() {
+  const tick = () => {
+    const now = performance.now();
+    const delta = now - state.lastFrameTime;
+    state.lastFrameTime = now;
+
+    if (delta > 0) {
+      const fps = Math.round(1000 / delta);
+      fpsBox.textContent = `FPS: ${fps}`;
+    }
+
+    state.frameCount += 1;
+  };
+
+  clearInterval(state.fpsInterval);
+  state.fpsInterval = setInterval(tick, 200);
+}
+
+function toggleCrosshairVisibility() {
+  const enabled = toggleCrosshair.checked;
+  crosshair.classList.toggle('visible', enabled);
+}
+
+function toggleFPSVisibility() {
+  const enabled = toggleFPS.checked;
+  fpsBox.classList.toggle('visible', enabled);
+
+  if (enabled) {
+    startFpsLoop();
+  } else {
+    clearInterval(state.fpsInterval);
+    fpsBox.textContent = 'FPS: --';
+  }
+}
+
+function loadClient(url) {
+  if (!url) {
+    setStatus('No URL provided.');
+    return;
+  }
+
+  try {
+    const parsed = new URL(url);
+    gameFrame.src = parsed.href;
+    emptyState.style.display = 'none';
+    setStatus(`Loading client from: ${parsed.href}`);
+  } catch {
+    setStatus('Invalid URL format. Use a full http:// or https:// URL.');
+  }
+}
+
+function openLocalClient() {
+  localFileInput.click();
+}
+
+async function handleLocalFile(file) {
+  if (!file) return;
+
+  const objectUrl = URL.createObjectURL(file);
+  gameFrame.src = objectUrl;
+  emptyState.style.display = 'none';
+  setStatus(`Loaded local HTML: ${file.name}`);
+}
+
+function setRuntimeToggles() {
+  const particleMode = toggleParticles.checked;
+  const shadowMode = toggleShadows.checked;
+
+  document.body.style.setProperty('--fx-particles', particleMode ? '0.5' : '1');
+  document.body.style.setProperty('--fx-shadows', shadowMode ? '0.35' : '1');
+
+  if (particleMode || shadowMode) {
+    setStatus('Lower visual cost enabled for client shell.');
+  }
+}
+
+document.getElementById('load-url-btn').addEventListener('click', () => {
+  loadClient(gameUrlInput.value.trim());
+});
+
+document.getElementById('load-local-btn').addEventListener('click', openLocalClient);
+
+gameUrlInput.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter') {
+    loadClient(gameUrlInput.value.trim());
+  }
+});
+
+localFileInput.addEventListener('change', (event) => {
+  const [file] = event.target.files;
+  if (file) handleLocalFile(file);
+});
+
+document.querySelectorAll('.preset').forEach((button) => {
+  button.addEventListener('click', () => applyPreset(button.dataset.preset));
+});
+
+toggleCrosshair.addEventListener('change', toggleCrosshairVisibility);
+toggleFPS.addEventListener('change', toggleFPSVisibility);
+toggleParticles.addEventListener('change', setRuntimeToggles);
+toggleShadows.addEventListener('change', setRuntimeToggles);
+
+gameFrame.addEventListener('load', () => {
+  setStatus('Client frame loaded successfully.');
+});
+
+gameFrame.addEventListener('error', () => {
+  setStatus('Client failed to load. Check the URL or the file contents.');
+});
+
+applyPreset('balanced');
+toggleCrosshairVisibility();
+toggleFPSVisibility();
+setRuntimeToggles();
