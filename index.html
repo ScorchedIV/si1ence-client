@@ -3,67 +3,67 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SI1ENCE Client</title>
+    <title>SI1ENCE - Eaglercraft 26.2</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="app-shell">
       <aside class="sidebar">
         <div class="brand-wrap">
-          <div class="brand-badge">S</div>
+          <div class="brand-badge">⚡</div>
           <div>
             <div class="eyebrow">Eaglercraft 26.2</div>
-            <h1>SI1ENCE Client</h1>
+            <h1>SI1ENCE</h1>
           </div>
         </div>
 
         <div class="panel-section">
-          <h2>Load client</h2>
+          <h2>Launch Client</h2>
           <div class="button-row">
-            <button id="load-rise-btn" class="primary">Load Rise</button>
+            <button id="load-client-btn" class="primary">Load SI1ENCE</button>
             <button id="load-url-btn" class="ghost">Load URL</button>
-            <button id="load-local-btn" class="ghost">Local HTML</button>
+            <button id="load-local-btn" class="ghost">Local</button>
           </div>
           <label class="input-label" for="game-url">Client URL</label>
-          <input id="game-url" type="text" value="https://raw.githubusercontent.com/CloudyIceWater/Riseeeeeiey/main/dist/RiseClient.html" />
+          <input id="game-url" type="text" value="https://scorchediv.github.io/si1ence-client/" />
         </div>
 
         <div class="panel-section">
-          <h2>Optimization preset</h2>
+          <h2>Combat Preset</h2>
           <div class="preset-grid" id="preset-grid">
-            <button class="preset active" data-preset="balanced">Balanced</button>
+            <button class="preset" data-preset="balanced">Balanced</button>
             <button class="preset" data-preset="performance">Performance</button>
-            <button class="preset" data-preset="pvp">PvP</button>
-            <button class="preset" data-preset="chunks">Chunk Boost</button>
+            <button class="preset active" data-preset="pvp">⚔️ PvP</button>
+            <button class="preset" data-preset="chunks">Chunks</button>
           </div>
         </div>
 
         <div class="panel-section">
-          <h2>Runtime tweaks</h2>
+          <h2>HUD & Tweaks</h2>
           <div class="toggle-row">
-            <label><input type="checkbox" id="toggle-crosshair" checked /> Custom crosshair</label>
+            <label><input type="checkbox" id="toggle-crosshair" checked /> Combat crosshair</label>
           </div>
           <div class="toggle-row">
-            <label><input type="checkbox" id="toggle-fps" checked /> FPS HUD</label>
+            <label><input type="checkbox" id="toggle-fps" checked /> FPS meter</label>
           </div>
           <div class="toggle-row">
-            <label><input type="checkbox" id="toggle-particles" /> Lower particles</label>
+            <label><input type="checkbox" id="toggle-particles" checked /> Reduce particles</label>
           </div>
           <div class="toggle-row">
-            <label><input type="checkbox" id="toggle-shadows" /> Lower shadows</label>
+            <label><input type="checkbox" id="toggle-shadows" /> Reduce shadows</label>
           </div>
         </div>
 
         <div class="panel-section status-box">
           <h2>Status</h2>
-          <div id="status-text">Rise Client is ready to load.</div>
+          <div id="status-text">SI1ENCE ready to launch</div>
         </div>
       </aside>
 
       <main class="game-stage">
         <div class="stage-topbar">
-          <div class="window-pill">Browser client</div>
-          <div class="window-pill accent">SI1ENCE</div>
+          <div class="window-pill">Eaglercraft 26.2</div>
+          <div class="window-pill accent">SI1ENCE ⚡</div>
         </div>
 
         <div class="frame-wrap">
@@ -71,10 +71,11 @@
             <div class="crosshair" id="crosshair"></div>
             <div class="fps-box" id="fps-box">FPS: --</div>
           </div>
-          <iframe id="game-frame" title="Eaglercraft client" allowfullscreen></iframe>
+          <iframe id="game-frame" title="SI1ENCE Eaglercraft Client" allowfullscreen></iframe>
           <div id="empty-state" class="empty-state">
-            <h3>Rise Client ready</h3>
-            <p>Click “Load Rise” to launch the browser client.</p>
+            <h3>SI1ENCE</h3>
+            <p>The best browser-based Eaglercraft 26.2 client for low-latency PvP.</p>
+            <p style="margin-top: 16px; font-size: 0.9rem; opacity: 0.7;">Click "Load SI1ENCE" to begin.</p>
           </div>
         </div>
       </main>
